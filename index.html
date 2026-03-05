@@ -13,7 +13,7 @@
 
     <style>
         /* ==========================================================================
-           ESTILOS CUSTOMIZADOS (TV RETRÔ E ANIMAÇÕES)
+           ESTILOS CUSTOMIZADOS
            ========================================================================== */
         
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
@@ -27,17 +27,6 @@
 
         /* Título com fonte retrô */
         .font-retro { font-family: 'Press Start 2P', cursive; }
-
-        /* Efeito visual de tela CRT (TV antiga) */
-        .crt-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            z-index: 50;
-            pointer-events: none; /* Permite clicar através do efeito */
-            opacity: 0.3;
-        }
 
         /* ONDE AJUSTAR A VELOCIDADE DO CARROSSEL
            Altere "40s" para mais tempo (mais lento) ou menos tempo (mais rápido) */
@@ -85,15 +74,12 @@
 </head>
 <body class="min-h-screen flex flex-col relative">
 
-    <!-- Camada de Efeito TV Antiga -->
-    <div class="crt-overlay"></div>
-
     <!-- ==========================================================================
          CABEÇALHO E CARROSSEL SUPERIOR
          ========================================================================== -->
     <header class="bg-gray-900 border-b-4 border-orange-500 shadow-lg relative z-10 pt-4 pb-2">
         <div class="text-center mb-4">
-            <h1 class="text-3xl font-retro text-orange-500 tracking-widest text-shadow">NICKTOONS - CLÁSSICOS</h1>
+            <h1 class="text-3xl font-retro text-orange-500 tracking-widest text-shadow">RETRO TOONS TV</h1>
         </div>
         
         <!-- Container do Carrossel -->
@@ -213,34 +199,25 @@
         // Adicione ou remova links entre aspas, separados por vírgula.
         // O sistema cuidará do redimensionamento e da repetição infinita automaticamente.
         const IMAGENS_CARROSSEL = [
-            'https://is1-ssl.mzstatic.com/image/thumb/aVZbPo-7Jc8AHw_trSlBwg/1200x675sr.webp',
-            'https://www.animationmagazine.net/wordpress/wp-content/uploads/rockos-modern-life-static-cling2.jpg',
-            'https://m.media-amazon.com/images/I/61tLzsoFDkL._SY425_.jpg',
-            'https://i.pinimg.com/736x/93/9b/e8/939be8852fd17390c3183dbdb51785a3.jpg',
-	        'https://br.web.img3.acsta.net/r_654_368/newsv7/15/11/23/18/18/447791.jpg'
-	    //'https://IMAGEM AQUI.PNG',
-	    //'https://IMAGEM AQUI.PNG',
-	   // 'https://IMAGEM AQUI.PNG',
-	    //'https://IMAGEM AQUI.PNG'
+            'https://upload.wikimedia.org/wikipedia/pt/2/23/SpongeBob_SquarePants_logo.svg',
+            'https://upload.wikimedia.org/wikipedia/commons/e/ec/Hey_Arnold_logo.png',
+            'https://upload.wikimedia.org/wikipedia/pt/e/ed/The_Fairly_OddParents_logo.png',
+            'https://upload.wikimedia.org/wikipedia/commons/7/77/Avatar_The_Last_Airbender_logo.svg',
+            'https://upload.wikimedia.org/wikipedia/pt/a/a4/Jimmy_Neutron_logo.png',
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Danny_Phantom_logo.svg/1024px-Danny_Phantom_logo.svg.png'
         ];
 
         // 3. ONDE ALTERAR IMAGENS DOS SLIDES LATERAIS (ESQUERDA E DIREITA)
         const IMAGENS_LADO_ESQUERDO = [
-            'https://i.pinimg.com/1200x/9a/61/df/9a61dfcd9ae177ac5df54b49a5a19347.jpg',
-            'https://i.pinimg.com/736x/4f/1a/60/4f1a605ad1b1e2431e00cf7309dacbd7.jpg',
-			'https://i.pinimg.com/736x/b6/f3/bb/b6f3bbe6c42cf55ae788e2ee105ad310.jpg',
-            'https://i.pinimg.com/1200x/1e/6c/34/1e6c34ee6926e9fdd03153b7703897c4.jpg',
-            'https://i.pinimg.com/736x/7a/2e/9b/7a2e9b268f375f08d715a4a68c556297.jpg',
-            'https://i.pinimg.com/736x/5a/a4/91/5aa49172352a74e51e6e24fc04485602.jpg'
+            'https://i.pinimg.com/736x/87/1b/30/871b305364ce0be1078d46db1ce2bdad.jpg',
+            'https://m.media-amazon.com/images/I/71Y0P6Gf+yL._AC_UF894,1000_QL80_.jpg',
+            'https://i.pinimg.com/736x/6f/a6/63/6fa66358c2f1f5ef4baefd0092c4d6eb.jpg'
         ];
 
         const IMAGENS_LADO_DIREITO = [
-            'https://i.pinimg.com/736x/b6/f3/bb/b6f3bbe6c42cf55ae788e2ee105ad310.jpg',
-            'https://i.pinimg.com/1200x/1e/6c/34/1e6c34ee6926e9fdd03153b7703897c4.jpg',
-            'https://i.pinimg.com/736x/7a/2e/9b/7a2e9b268f375f08d715a4a68c556297.jpg',
-			'https://i.pinimg.com/1200x/9a/61/df/9a61dfcd9ae177ac5df54b49a5a19347.jpg',
-            'https://m.media-amazon.com/images/I/71Y0P6Gf+yL._AC_UF894,1000_QL80_.jpg',
-	    	'https://i.pinimg.com/736x/c3/bc/03/c3bc036e7a6996a3cf8e25be8b5c723b.jpg'
+            'https://i.pinimg.com/736x/bc/39/3c/bc393cd6248911d23ebedef015e10086.jpg',
+            'https://i.pinimg.com/736x/1a/af/3f/1aaf3fbc7d976be04d2cc6722d3dae3c.jpg',
+            'https://i.pinimg.com/736x/35/6b/e0/356be0e4d2ce87e6da48d949b9eeafc6.jpg'
         ];
 
         // 4. ONDE AJUSTAR TEMPO DOS SLIDES LATERAIS (Em milissegundos: 20000 = 20 segundos)
@@ -425,9 +402,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
