@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro TV - Nicktoons</title>
+    
+    <!-- Tailwind CSS para Estilização Rápida e Responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HLS.js para rodar streams .m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        /* ==========================================================================
+           ESTILOS CUSTOMIZADOS (TV RETRÔ E ANIMAÇÕES)
+           ========================================================================== */
+        
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0a0a0a;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Título com fonte retrô */
+        .font-retro { font-family: 'Press Start 2P', cursive; }
+
+        /* Efeito visual de tela CRT (TV antiga) */
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 50;
+            pointer-events: none; /* Permite clicar através do efeito */
+            opacity: 0.3;
+        }
+
+        /* ONDE AJUSTAR A VELOCIDADE DO CARROSSEL
+           Altere "40s" para mais tempo (mais lento) ou menos tempo (mais rápido) */
+        .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: scrollCarousel 40s linear infinite;
+        }
+
+        .carousel-track:hover {
+            animation-play-state: paused; /* Pausa ao passar o mouse */
+        }
+
+        @keyframes scrollCarousel {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } 
+            /* Desloca 50% porque o conteúdo é duplicado via JS para loop infinito */
+        }
+
+        /* Esconder barra de rolagem mas permitir scroll se necessário */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 4px; }
+
+        /* Estilo para barra de volume customizada */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px; width: 12px;
+            border-radius: 50%;
+            background: #f97316;
+            cursor: pointer;
+            margin-top: -4px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <!-- Camada de Efeito TV Antiga -->
+    <div class="crt-overlay"></div>
+
+    <!-- ==========================================================================
+         CABEÇALHO E CARROSSEL SUPERIOR
+         ========================================================================== -->
+    <header class="bg-gray-900 border-b-4 border-orange-500 shadow-lg relative z-10 pt-4 pb-2">
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-retro text-orange-500 tracking-widest text-shadow">NICKTOONS - CLÁSSICOS</h1>
+        </div>
+        
+        <!-- Container do Carrossel -->
+        <div class="overflow-hidden w-full relative h-24 sm:h-32 bg-gray-800 border-y-2 border-gray-700">
+            <!-- As imagens serão injetadas aqui via JavaScript -->
+            <div id="carousel-track" class="carousel-track h-full items-center gap-4 px-2">
+                <!-- Imagens entram aqui -->
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         LAYOUT PRINCIPAL (SLIDE ESQ | PLAYER | SLIDE DIR)
+         ========================================================================== -->
+    <main class="flex-1 flex flex-col lg:flex-row p-4 gap-6 items-stretch justify-center relative z-10 max-w-screen-2xl mx-auto w-full">
+        
+        <!-- SLIDE LATERAL ESQUERDO -->
+        <aside class="hidden lg:flex w-1/5 flex-col bg-gray-800 border-2 border-gray-700 rounded-xl overflow-hidden shadow-2xl relative">
+            <div class="absolute inset-0 bg-black/50 z-10 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+            <!-- A imagem é substituída via JS -->
+            <img id="slide-left-img" src="" alt="Slide Esquerdo" class="w-full h-full object-cover transition-opacity duration-1000 ease-in-out">
+        </aside>
+
+        <!-- PLAYER CENTRAL (FOCO PRINCIPAL) -->
+        <section class="flex-1 w-full max-w-5xl flex flex-col justify-center">
+            
+            <div id="video-container" class="relative group bg-black rounded-xl overflow-hidden shadow-[0_0_30px_rgba(249,115,22,0.15)] border border-gray-700 aspect-video">
+                
+                <!-- Tag de Vídeo Nativa -->
+                <video id="main-player" class="w-full h-full object-contain bg-black" playsinline></video>
+
+                <!-- Status de Carregamento/Play Inicial -->
+                <div id="play-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer z-20 transition-opacity">
+                    <button class="bg-orange-500 hover:bg-orange-400 text-white rounded-full p-6 transition transform hover:scale-110">
+                        <svg class="w-12 h-12 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                </div>
+
+                <!-- Controles Customizados (Estilo YouTube, aparecem no hover) -->
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-12 pb-2 px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                    
+                    <!-- Barra de Progresso (Visual para Live Stream) -->
+                    <div class="w-full h-1 bg-gray-600 cursor-pointer rounded mb-3 relative group/bar">
+                        <div id="progress-bar" class="h-full bg-orange-500 rounded relative w-0">
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-orange-500 rounded-full scale-0 group-hover/bar:scale-100 transition-transform"></div>
+                        </div>
+                    </div>
+
+                    <!-- Botões Inferiores -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <!-- Play/Pause -->
+                            <button id="btn-play-pause" class="text-white hover:text-orange-500 transition">
+                                <svg id="icon-play" class="w-7 h-7 fill-current hidden" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <svg id="icon-pause" class="w-7 h-7 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+
+                            <!-- Volume -->
+                            <div class="flex items-center gap-2 group/vol">
+                                <button id="btn-mute" class="text-white hover:text-orange-500 transition">
+                                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                                </button>
+                                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="w-0 group-hover/vol:w-20 transition-all duration-300 ease-in-out opacity-0 group-hover/vol:opacity-100">
+                            </div>
+
+                            <!-- Indicador de AO VIVO -->
+                            <div class="flex items-center gap-1.5 ml-2">
+                                <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                                <span class="text-xs font-bold tracking-wider text-gray-300">LIVE</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <!-- Botão PiP (Picture in Picture) -->
+                            <button id="btn-pip" class="text-white hover:text-orange-500 transition" title="Modo Miniatura">
+                                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+                            </button>
+
+                            <!-- Tela Cheia -->
+                            <button id="btn-fullscreen" class="text-white hover:text-orange-500 transition" title="Tela Cheia">
+                                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-between items-center text-sm text-gray-400">
+                <p>Transmitindo: <span class="text-white font-semibold">Nicktoons Retrô</span></p>
+                <p>Qualidade: <span class="bg-gray-800 text-orange-500 px-2 py-1 rounded text-xs">AUTO (HLS)</span></p>
+            </div>
+        </section>
+
+        <!-- SLIDE LATERAL DIREITO -->
+        <aside class="hidden lg:flex w-1/5 flex-col bg-gray-800 border-2 border-gray-700 rounded-xl overflow-hidden shadow-2xl relative">
+            <div class="absolute inset-0 bg-black/50 z-10 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+            <!-- A imagem é substituída via JS -->
+            <img id="slide-right-img" src="" alt="Slide Direito" class="w-full h-full object-cover transition-opacity duration-1000 ease-in-out">
+        </aside>
+
+    </main>
+
+    <!-- ==========================================================================
+         LÓGICA JAVASCRIPT E CONFIGURAÇÕES
+         ========================================================================== -->
+    <script>
+        /**
+         * =======================================================================
+         * ⚙️ ZONA DE CONFIGURAÇÃO FÁCIL (ALTERE AQUI OS DADOS DA PÁGINA)
+         * =======================================================================
+         */
+
+        // 1. ONDE ALTERAR LINK DO STREAM (.m3u8)
+        const URL_DO_STREAM = 'https://stmv2.srvif.com/nicktoons/nicktoons/playlist.m3u8';
+
+        // 2. ONDE ALTERAR IMAGENS DO CARROSSEL SUPERIOR
+        // Adicione ou remova links entre aspas, separados por vírgula.
+        // O sistema cuidará do redimensionamento e da repetição infinita automaticamente.
+        const IMAGENS_CARROSSEL = [
+            'https://static.wikia.nocookie.net/dublagem/images/b/b1/OsPadrinhosMagicos.jpg/revision/latest?cb=20211027130108&path-prefix=pt-br',
+            'https://static.wikia.nocookie.net/dublagem/images/6/63/Os_Castores_Pirados.jpg/revision/latest?cb=20230424181522&path-prefix=pt-br',
+            'https://is1-ssl.mzstatic.com/image/thumb/aVZbPo-7Jc8AHw_trSlBwg/1200x675sr.webp',
+            'https://www.animationmagazine.net/wordpress/wp-content/uploads/rockos-modern-life-static-cling2.jpg',
+            'https://m.media-amazon.com/images/I/61tLzsoFDkL._SY425_.jpg',
+            'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEid-lvu2vg_j_hry9tc2BohjFNvTJ4hQly0QnNc3cf2aY8w_jSQfTQ0O7ck_PD1omQxLiujZyKoTlEjrUG4yVat61meD3AWHs9QRiXbxNkEe59wJTf8ILJpqEcMUhLznFuGkA9rpgsU4yo/s1600/Rocket-Power-aniversario-18.jpg',
+	    'https://br.web.img3.acsta.net/r_654_368/newsv7/15/11/23/18/18/447791.jpg',
+	    'https://IMAGEM AQUI.PNG',
+	    'https://IMAGEM AQUI.PNG',
+	    'https://IMAGEM AQUI.PNG',
+	    'https://IMAGEM AQUI.PNG'
+        ];
+
+        // 3. ONDE ALTERAR IMAGENS DOS SLIDES LATERAIS (ESQUERDA E DIREITA)
+        const IMAGENS_LADO_ESQUERDO = [
+            'https://i.pinimg.com/1200x/9a/61/df/9a61dfcd9ae177ac5df54b49a5a19347.jpg',
+            'https://m.media-amazon.com/images/I/71Y0P6Gf+yL._AC_UF894,1000_QL80_.jpg',
+            'https://i.pinimg.com/736x/5a/a4/91/5aa49172352a74e51e6e24fc04485602.jpg'
+        ];
+
+        const IMAGENS_LADO_DIREITO = [
+            'https://i.pinimg.com/736x/b6/f3/bb/b6f3bbe6c42cf55ae788e2ee105ad310.jpg',
+            'https://i.pinimg.com/1200x/1e/6c/34/1e6c34ee6926e9fdd03153b7703897c4.jpg',
+            'https://i.pinimg.com/736x/7a/2e/9b/7a2e9b268f375f08d715a4a68c556297.jpg',
+	    'https://i.pinimg.com/736x/c3/bc/03/c3bc036e7a6996a3cf8e25be8b5c723b.jpg'
+        ];
+
+        // 4. ONDE AJUSTAR TEMPO DOS SLIDES LATERAIS (Em milissegundos: 20000 = 20 segundos)
+        const TEMPO_SLIDE_LATERAL = 20000;
+
+        /** =======================================================================
+         * FIM DA ZONA DE CONFIGURAÇÃO (Não altere abaixo a menos que saiba o que faz)
+         * =======================================================================
+         */
+
+        // --- SISTEMA DE CARROSSEL AUTOMÁTICO ---
+        function inicializarCarrossel() {
+            const track = document.getElementById('carousel-track');
+            
+            // Função para injetar imagens mantendo proporções e layout fixo (object-fit: contain/cover)
+            const criarImagensHTML = () => {
+                return IMAGENS_CARROSSEL.map(url => 
+                    `<img src="${url}" class="h-20 sm:h-24 w-auto object-contain bg-white/5 rounded-lg border border-white/10 p-2 mx-4" onerror="this.style.display='none'">`
+                ).join('');
+            };
+
+            // Duplicamos as imagens para criar o efeito de scroll infinito contínuo sem quebras
+            track.innerHTML = criarImagensHTML() + criarImagensHTML();
+        }
+
+        // --- SISTEMA DE SLIDES LATERAIS AUTOMÁTICOS ---
+        function inicializarSlides() {
+            const imgEsquerda = document.getElementById('slide-left-img');
+            const imgDireita = document.getElementById('slide-right-img');
+            
+            let indiceEsq = 0;
+            let indiceDir = 0;
+
+            // Define a imagem inicial
+            if(IMAGENS_LADO_ESQUERDO.length > 0) imgEsquerda.src = IMAGENS_LADO_ESQUERDO[0];
+            if(IMAGENS_LADO_DIREITO.length > 0) imgDireita.src = IMAGENS_LADO_DIREITO[0];
+
+            // Troca de imagens a cada X segundos com fade
+            setInterval(() => {
+                // Efeito visual de Fade Out
+                imgEsquerda.style.opacity = 0;
+                imgDireita.style.opacity = 0;
+
+                setTimeout(() => {
+                    // Troca o src e Faz Fade In
+                    indiceEsq = (indiceEsq + 1) % IMAGENS_LADO_ESQUERDO.length;
+                    indiceDir = (indiceDir + 1) % IMAGENS_LADO_DIREITO.length;
+                    
+                    imgEsquerda.src = IMAGENS_LADO_ESQUERDO[indiceEsq];
+                    imgDireita.src = IMAGENS_LADO_DIREITO[indiceDir];
+                    
+                    imgEsquerda.style.opacity = 1;
+                    imgDireita.style.opacity = 1;
+                }, 500); // Tempo do fade out (metade da animação CSS)
+
+            }, TEMPO_SLIDE_LATERAL);
+        }
+
+        // --- SISTEMA DE VÍDEO HLS E CONTROLES CUSTOMIZADOS ---
+        function inicializarPlayer() {
+            const video = document.getElementById('main-player');
+            const overlay = document.getElementById('play-overlay');
+            const btnPlayPause = document.getElementById('btn-play-pause');
+            const iconPlay = document.getElementById('icon-play');
+            const iconPause = document.getElementById('icon-pause');
+            const btnMute = document.getElementById('btn-mute');
+            const volumeSlider = document.getElementById('volume-slider');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const btnPip = document.getElementById('btn-pip');
+            const videoContainer = document.getElementById('video-container');
+            const progressBar = document.getElementById('progress-bar');
+
+            // Carregamento do Stream HLS
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    capLevelToPlayerSize: true, // Otimização
+                });
+                hls.loadSource(URL_DO_STREAM);
+                hls.attachMedia(video);
+                
+                // Trata erro de carregamento (mostra play button pra forçar interação)
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch(data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hls.recoverMediaError();
+                                break;
+                        }
+                    }
+                });
+
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Suporte nativo Safari/Apple
+                video.src = URL_DO_STREAM;
+            }
+
+            // Ações de Controles
+            const togglePlay = () => {
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            };
+
+            const updatePlayState = () => {
+                if (video.paused) {
+                    iconPlay.classList.remove('hidden');
+                    iconPause.classList.add('hidden');
+                    overlay.style.opacity = '1';
+                    overlay.style.pointerEvents = 'auto';
+                } else {
+                    iconPlay.classList.add('hidden');
+                    iconPause.classList.remove('hidden');
+                    overlay.style.opacity = '0';
+                    overlay.style.pointerEvents = 'none';
+                }
+            };
+
+            // Event Listeners principais
+            overlay.addEventListener('click', togglePlay);
+            btnPlayPause.addEventListener('click', togglePlay);
+            video.addEventListener('click', togglePlay);
+            video.addEventListener('play', updatePlayState);
+            video.addEventListener('pause', updatePlayState);
+
+            // Volume
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                video.muted = (video.volume === 0);
+            });
+
+            btnMute.addEventListener('click', () => {
+                video.muted = !video.muted;
+                volumeSlider.value = video.muted ? 0 : video.volume || 1;
+            });
+
+            // Tela Cheia
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    videoContainer.requestFullscreen().catch(err => {
+                        console.error(`Erro ao ativar tela cheia: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            // Picture-in-Picture
+            btnPip.addEventListener('click', async () => {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else if (document.pictureInPictureEnabled && !video.disablePictureInPicture) {
+                    try {
+                        await video.requestPictureInPicture();
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            });
+
+            // Simulador de barra de progresso para Live
+            // Em HLS live, o progresso real é complexo, então fazemos um visual ativo.
+            setInterval(() => {
+                if(!video.paused) {
+                    progressBar.style.width = '100%';
+                    progressBar.style.transition = 'width 1s linear';
+                }
+            }, 1000);
+        }
+
+        // Executa todas as funções ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarCarrossel();
+            inicializarSlides();
+            inicializarPlayer();
+        });
+
+    </script>
+</body>
+</html>
