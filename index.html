@@ -13,7 +13,7 @@
 
     <style>
         /* ==========================================================================
-           ESTILOS CUSTOMIZADOS (TV RETRÔ E ANIMAÇÕES)
+           ESTILOS CUSTOMIZADOS
            ========================================================================== */
         
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
@@ -27,17 +27,6 @@
 
         /* Título com fonte retrô */
         .font-retro { font-family: 'Press Start 2P', cursive; }
-
-        /* Efeito visual de tela CRT (TV antiga) */
-        .crt-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            z-index: 50;
-            pointer-events: none; /* Permite clicar através do efeito */
-            opacity: 0.3;
-        }
 
         /* ONDE AJUSTAR A VELOCIDADE DO CARROSSEL
            Altere "40s" para mais tempo (mais lento) ou menos tempo (mais rápido) */
@@ -85,15 +74,12 @@
 </head>
 <body class="min-h-screen flex flex-col relative">
 
-    <!-- Camada de Efeito TV Antiga -->
-    <div class="crt-overlay"></div>
-
     <!-- ==========================================================================
          CABEÇALHO E CARROSSEL SUPERIOR
          ========================================================================== -->
     <header class="bg-gray-900 border-b-4 border-orange-500 shadow-lg relative z-10 pt-4 pb-2">
         <div class="text-center mb-4">
-            <h1 class="text-3xl font-retro text-orange-500 tracking-widest text-shadow">NICKTOONS - CLÁSSICOS</h1>
+            <h1 class="text-3xl font-retro text-orange-500 tracking-widest text-shadow">RETRO TOONS TV</h1>
         </div>
         
         <!-- Container do Carrossel -->
@@ -420,4 +406,3 @@
     </script>
 </body>
 </html>
-
